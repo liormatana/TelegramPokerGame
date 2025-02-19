@@ -1,178 +1,39 @@
-<!DOCTYPE html>
-<html lang="he">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>משחק טקסס הולדם אונליין</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #1a1a1a;
-            color: white;
-        }
-        #table-container {
-            position: relative;
-            width: 900px;
-            height: 600px;
-            margin: auto;
-            background-color: #b22222;
-            border-radius: 50%;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
-        }
-        .seat {
-            position: absolute;
-            width: 100px;
-            height: 100px;
-            background-color: #222;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 14px;
-            font-weight: bold;
-            color: white;
-            cursor: pointer;
-            flex-direction: column;
-        }
-        .occupied {
-            background-color: #444;
-        }
-        .dealer {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 20px;
-            font-weight: bold;
-            color: gold;
-        }
-        .card {
-            display: inline-block;
-            width: 50px;
-            height: 70px;
-            margin: 5px;
-            background-color: white;
-            color: black;
-            font-size: 18px;
-            line-height: 70px;
-            text-align: center;
-            border-radius: 5px;
-            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
-        }
-        .hidden-card {
-            background-color: gray;
-            color: gray;
-        }
-        .pot {
-            position: absolute;
-            top: 45%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 20px;
-            font-weight: bold;
-            color: yellow;
-        }
-        button {
-            margin: 10px;
-            padding: 10px;
-            font-size: 18px;
-            background-color: #ff9800;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-    </style>
-</head>
-<body>
-    <h1>משחק טקסס הולדם אונליין</h1>
-    <div id="table-container">
-        <div class="dealer">דילר</div>
-        <div id="communityCards"></div>
-        <div class="pot">קופה: <span id="potAmount">0</span></div>
-        <div class="seat" id="seat1" style="top: 10px; left: 400px;" onclick="joinGame(1)">+</div>
-        <div class="seat" id="seat2" style="top: 150px; left: 750px;" onclick="joinGame(2)">+</div>
-        <div class="seat" id="seat3" style="bottom: 10px; left: 400px;" onclick="joinGame(3)">+</div>
-        <div class="seat" id="seat4" style="top: 150px; left: 50px;" onclick="joinGame(4)">+</div>
-    </div>
-    <div>
-        <button onclick="startGame()">התחל משחק</button>
-        <button onclick="playerCheck()">Check</button>
-        <button onclick="playerBet()">Raise</button>
-        <button onclick="playerFold()">Fold</button>
-    </div>
-    <script>
-        let occupiedSeats = {};
-        let playerNames = {};
-        let communityCards = [];
-        let playerHands = {};
-        let potAmount = 0;
-        let currentTurn = 1;
-        let totalPlayers = 0;
-        let currentBets = {};
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 
-        function joinGame(seatNumber) {
-            if (occupiedSeats[seatNumber]) {
-                alert("כבר יש שחקן בכיסא הזה!");
-                return;
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+    }
+});
+
+let players = {};
+
+io.on('connection', (socket) => {
+    console.log('A user connected:', socket.id);
+
+    socket.on('joinGame', (data) => {
+        if (!players[data.seat]) {
+            players[data.seat] = { id: socket.id, name: data.name, chips: 1000 };
+            io.emit('updatePlayers', players);
+            console.log(`${data.name} joined at seat ${data.seat}`);
+        }
+    });
+
+    socket.on('disconnect', () => {
+        Object.keys(players).forEach(seat => {
+            if (players[seat].id === socket.id) {
+                console.log(`${players[seat].name} disconnected`);
+                delete players[seat];
+                io.emit('updatePlayers', players);
             }
-            let playerName = prompt("הכנס שם שחקן:");
-            if (!playerName) return;
-            document.getElementById(`seat${seatNumber}`).classList.add("occupied");
-            document.getElementById(`seat${seatNumber}`).innerHTML = `${playerName}<br>$1000`;
-            occupiedSeats[seatNumber] = true;
-            playerNames[seatNumber] = playerName;
-            playerHands[seatNumber] = [getRandomCard(), getRandomCard()];
-            currentBets[seatNumber] = 0;
-            totalPlayers++;
-        }
+        });
+    });
+});
 
-        function startGame() {
-            if (totalPlayers < 2) {
-                alert("נדרשים לפחות שני שחקנים כדי להתחיל את המשחק.");
-                return;
-            }
-            communityCards = [getRandomCard(), getRandomCard(), getRandomCard(), getRandomCard(), getRandomCard()];
-            document.getElementById("communityCards").innerHTML = "";
-            revealFlop();
-        }
-
-        function revealFlop() {
-            for (let i = 0; i < 3; i++) {
-                revealCard(i);
-            }
-        }
-
-        function revealTurn() {
-            revealCard(3);
-        }
-
-        function revealRiver() {
-            revealCard(4);
-        }
-
-        function playerBet() {
-            let bet = parseInt(prompt("כמה אתה רוצה להמר?"));
-            if (isNaN(bet) || bet <= 0) return;
-            potAmount += bet;
-            document.getElementById("potAmount").textContent = potAmount;
-            alert("הימרת " + bet);
-        }
-
-        function getRandomCard() {
-            const suits = ['♠', '♥', '♦', '♣'];
-            const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-            let suit = suits[Math.floor(Math.random() * suits.length)];
-            let value = values[Math.floor(Math.random() * values.length)];
-            return `${value}${suit}`;
-        }
-
-        function revealCard(index) {
-            let cardDiv = document.createElement("div");
-            cardDiv.classList.add("card");
-            cardDiv.textContent = communityCards[index];
-            document.getElementById("communityCards").appendChild(cardDiv);
-        }
-    </script>
-</body>
-</html>
+server.listen(3000, () => {
+    console.log('Server running on http://localhost:3000');
+});
