@@ -34,6 +34,11 @@
             justify-content: center;
             align-items: center;
             font-weight: bold;
+            cursor: pointer;
+        }
+        .occupied {
+            background-image: url('player.png');
+            cursor: default;
         }
         .dealer {
             position: absolute;
@@ -46,13 +51,6 @@
             background-size: cover;
             width: 120px;
             height: 120px;
-            border-radius: 50%;
-        }
-        .player-avatar {
-            width: 100%;
-            height: 100%;
-            background-image: url('player.png');
-            background-size: cover;
             border-radius: 50%;
         }
         .card {
@@ -97,10 +95,10 @@
         <div id="dealer" class="dealer"></div>
         <div id="playerCards"></div>
         <div id="communityCards"></div>
-        <div class="seat" style="top: 10px; left: 400px;"><div class="player-avatar"></div></div>
-        <div class="seat" style="top: 150px; left: 800px;"><div class="player-avatar"></div></div>
-        <div class="seat" style="bottom: 10px; left: 400px;"><div class="player-avatar"></div></div>
-        <div class="seat" style="top: 150px; left: 50px;"><div class="player-avatar"></div></div>
+        <div class="seat" id="seat1" style="top: 10px; left: 400px;" onclick="joinGame(1)">שחקן 1</div>
+        <div class="seat" id="seat2" style="top: 150px; left: 800px;" onclick="joinGame(2)">שחקן 2</div>
+        <div class="seat" id="seat3" style="bottom: 10px; left: 400px;" onclick="joinGame(3)">שחקן 3</div>
+        <div class="seat" id="seat4" style="top: 150px; left: 50px;" onclick="joinGame(4)">שחקן 4</div>
     </div>
     <div id="controls">
         <button onclick="playerCheck()">Check</button>
@@ -111,53 +109,13 @@
     <div id="chat"></div>
     
     <script>
-        const suits = ['♠', '♥', '♦', '♣'];
-        const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-        let communityCards = [];
-        let playerChips = 1000;
-        
-        function getRandomCard() {
-            let suit = suits[Math.floor(Math.random() * suits.length)];
-            let value = values[Math.floor(Math.random() * values.length)];
-            return `${value}${suit}`;
-        }
-        
-        function startGame() {
-            document.getElementById("playerCards").innerHTML =
-                `<div class='card'>${getRandomCard()}</div> <div class='card'>${getRandomCard()}</div>`;
-            
-            communityCards = [getRandomCard(), getRandomCard(), getRandomCard(), getRandomCard(), getRandomCard()];
-            document.getElementById("communityCards").innerHTML = "";
-            setTimeout(() => revealCard(0), 1000);
-            setTimeout(() => revealCard(1), 2000);
-            setTimeout(() => revealCard(2), 3000);
-            setTimeout(() => revealCard(3), 4000);
-            setTimeout(() => revealCard(4), 5000);
-        }
-        
-        function revealCard(index) {
-            let cardDiv = document.createElement("div");
-            cardDiv.classList.add("card");
-            cardDiv.textContent = communityCards[index];
-            document.getElementById("communityCards").appendChild(cardDiv);
-        }
-        
-        function playerCheck() {
-            alert("Check - המשחק ממשיך");
-        }
-        
-        function playerBet() {
-            if (playerChips >= 100) {
-                playerChips -= 100;
-                document.getElementById("playerChips").innerText = playerChips;
-                alert("Raise - הימור נוסף בוצע!");
-            } else {
-                alert("אין מספיק צ'יפים!");
+        let occupiedSeats = {};
+        function joinGame(seatNumber) {
+            if (!occupiedSeats[seatNumber]) {
+                document.getElementById(`seat${seatNumber}`).classList.add("occupied");
+                occupiedSeats[seatNumber] = true;
+                alert(`שחקן ${seatNumber} הצטרף למשחק!`);
             }
-        }
-        
-        function playerFold() {
-            alert("Fold - השחקן פורש מהסיבוב");
         }
     </script>
 </body>
