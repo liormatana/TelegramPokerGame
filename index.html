@@ -8,37 +8,34 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            background-color: #2e7d32;
+            background-color: #1a1a1a;
             color: white;
         }
         #table-container {
             position: relative;
-            width: 1000px;
-            height: 700px;
+            width: 900px;
+            height: 600px;
             margin: auto;
-            background-color: #1b5e20;
+            background-color: #006400;
             border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
         }
         .seat {
             position: absolute;
-            width: 120px;
-            height: 120px;
-            background-image: url('chair.png');
-            background-size: cover;
+            width: 100px;
+            height: 100px;
+            background-color: #333;
             border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
+            font-size: 14px;
             font-weight: bold;
+            color: white;
             cursor: pointer;
         }
         .occupied {
-            background-image: url('player.png');
-            cursor: default;
+            background-color: #444;
         }
         .dealer {
             position: absolute;
@@ -47,23 +44,29 @@
             transform: translate(-50%, -50%);
             font-size: 20px;
             font-weight: bold;
-            background-image: url('dealer.png');
-            background-size: cover;
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
+            color: gold;
         }
         .card {
             display: inline-block;
-            width: 60px;
-            height: 90px;
+            width: 50px;
+            height: 70px;
             margin: 5px;
             background-color: white;
             color: black;
-            font-size: 20px;
-            line-height: 90px;
+            font-size: 18px;
+            line-height: 70px;
             text-align: center;
             border-radius: 5px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+        }
+        .pot {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            font-weight: bold;
+            color: yellow;
         }
         button {
             margin: 10px;
@@ -74,61 +77,65 @@
             border-radius: 5px;
             cursor: pointer;
         }
-        #chat {
-            margin-top: 20px;
-            width: 300px;
-            height: 200px;
-            background-color: #fff;
-            color: black;
-            border-radius: 10px;
-            overflow-y: auto;
-            padding: 10px;
-        }
-        #controls {
-            margin-top: 20px;
-        }
     </style>
 </head>
 <body>
     <h1>משחק טקסס הולדם אונליין</h1>
     <div id="table-container">
-        <div id="dealer" class="dealer"></div>
-        <div id="playerCards"></div>
+        <div class="dealer">דילר</div>
         <div id="communityCards"></div>
-        <div class="seat" id="seat1" style="top: 10px; left: 400px;" onclick="joinGame(1)">שחקן 1</div>
-        <div class="seat" id="seat2" style="top: 150px; left: 800px;" onclick="joinGame(2)">שחקן 2</div>
-        <div class="seat" id="seat3" style="bottom: 10px; left: 400px;" onclick="joinGame(3)">שחקן 3</div>
-        <div class="seat" id="seat4" style="top: 150px; left: 50px;" onclick="joinGame(4)">שחקן 4</div>
+        <div class="pot">קופה: <span id="potAmount">0</span></div>
+        <div class="seat" id="seat1" style="top: 10px; left: 400px;" onclick="joinGame(1)">שחקן 1<br>$1000</div>
+        <div class="seat" id="seat2" style="top: 150px; left: 750px;" onclick="joinGame(2)">שחקן 2<br>$1000</div>
+        <div class="seat" id="seat3" style="bottom: 10px; left: 400px;" onclick="joinGame(3)">שחקן 3<br>$1000</div>
+        <div class="seat" id="seat4" style="top: 150px; left: 50px;" onclick="joinGame(4)">שחקן 4<br>$1000</div>
     </div>
-    <div id="controls">
+    <div>
         <button onclick="startGame()">התחל משחק</button>
         <button onclick="playerCheck()">Check</button>
         <button onclick="playerBet()">Raise</button>
         <button onclick="playerFold()">Fold</button>
-        <span>צ'יפים: <span id="playerChips">1000</span></span>
     </div>
-    <div id="chat"></div>
-    
     <script>
         let occupiedSeats = {};
         let communityCards = [];
+        let playerHands = {};
+        let potAmount = 0;
+        let currentTurn = 1;
+        let totalPlayers = 0;
         
         function joinGame(seatNumber) {
             if (!occupiedSeats[seatNumber]) {
                 document.getElementById(`seat${seatNumber}`).classList.add("occupied");
                 occupiedSeats[seatNumber] = true;
-                alert(`שחקן ${seatNumber} הצטרף למשחק!`);
+                playerHands[seatNumber] = [getRandomCard(), getRandomCard()];
+                totalPlayers++;
+                alert(`שחקן ${seatNumber} הצטרף עם קלפים: ${playerHands[seatNumber].join(" ")}`);
             }
         }
         
         function startGame() {
+            if (totalPlayers < 2) {
+                alert("נדרשים לפחות שני שחקנים כדי להתחיל את המשחק.");
+                return;
+            }
             communityCards = [getRandomCard(), getRandomCard(), getRandomCard(), getRandomCard(), getRandomCard()];
             document.getElementById("communityCards").innerHTML = "";
-            setTimeout(() => revealCard(0), 1000);
-            setTimeout(() => revealCard(1), 2000);
-            setTimeout(() => revealCard(2), 3000);
-            setTimeout(() => revealCard(3), 4000);
-            setTimeout(() => revealCard(4), 5000);
+            revealFlop();
+        }
+        
+        function revealFlop() {
+            for (let i = 0; i < 3; i++) {
+                revealCard(i);
+            }
+        }
+        
+        function revealTurn() {
+            revealCard(3);
+        }
+        
+        function revealRiver() {
+            revealCard(4);
         }
         
         function getRandomCard() {
