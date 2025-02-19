@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>משחק פוקר אונליין</title>
+    <title>משחק טקסס הולדם אונליין</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -90,7 +90,7 @@
     </style>
 </head>
 <body>
-    <h1>משחק פוקר אונליין</h1>
+    <h1>משחק טקסס הולדם אונליין</h1>
     <div id="table-container">
         <div id="dealer" class="dealer"></div>
         <div id="playerCards"></div>
@@ -101,6 +101,7 @@
         <div class="seat" id="seat4" style="top: 150px; left: 50px;" onclick="joinGame(4)">שחקן 4</div>
     </div>
     <div id="controls">
+        <button onclick="startGame()">התחל משחק</button>
         <button onclick="playerCheck()">Check</button>
         <button onclick="playerBet()">Raise</button>
         <button onclick="playerFold()">Fold</button>
@@ -110,12 +111,39 @@
     
     <script>
         let occupiedSeats = {};
+        let communityCards = [];
+        
         function joinGame(seatNumber) {
             if (!occupiedSeats[seatNumber]) {
                 document.getElementById(`seat${seatNumber}`).classList.add("occupied");
                 occupiedSeats[seatNumber] = true;
                 alert(`שחקן ${seatNumber} הצטרף למשחק!`);
             }
+        }
+        
+        function startGame() {
+            communityCards = [getRandomCard(), getRandomCard(), getRandomCard(), getRandomCard(), getRandomCard()];
+            document.getElementById("communityCards").innerHTML = "";
+            setTimeout(() => revealCard(0), 1000);
+            setTimeout(() => revealCard(1), 2000);
+            setTimeout(() => revealCard(2), 3000);
+            setTimeout(() => revealCard(3), 4000);
+            setTimeout(() => revealCard(4), 5000);
+        }
+        
+        function getRandomCard() {
+            const suits = ['♠', '♥', '♦', '♣'];
+            const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+            let suit = suits[Math.floor(Math.random() * suits.length)];
+            let value = values[Math.floor(Math.random() * values.length)];
+            return `${value}${suit}`;
+        }
+        
+        function revealCard(index) {
+            let cardDiv = document.createElement("div");
+            cardDiv.classList.add("card");
+            cardDiv.textContent = communityCards[index];
+            document.getElementById("communityCards").appendChild(cardDiv);
         }
     </script>
 </body>
