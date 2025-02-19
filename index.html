@@ -107,31 +107,31 @@
         let communityCards = [];
         let playerHands = {};
         let potAmount = 0;
-        let currentPlayer = null;
-        
+        let currentTurn = 1;
+        let totalPlayers = 0;
+        let currentBets = {};
+
         function joinGame(seatNumber) {
-            if (!occupiedSeats[seatNumber]) {
-                let playerName = prompt("הכנס שם שחקן:");
-                if (!playerName) return;
-                
-                document.getElementById(`seat${seatNumber}`).classList.add("occupied");
-                document.getElementById(`seat${seatNumber}`).innerHTML = `${playerName}<br>$1000`;
-                occupiedSeats[seatNumber] = true;
-                playerNames[seatNumber] = playerName;
-                playerHands[seatNumber] = [getRandomCard(), getRandomCard()];
-                showPlayerCards(seatNumber);
+            if (occupiedSeats[seatNumber]) {
+                alert("כבר יש שחקן בכיסא הזה!");
+                return;
             }
-        }
-        
-        function showPlayerCards(seatNumber) {
-            if (seatNumber === currentPlayer) {
-                alert(`הקלפים שלך: ${playerHands[seatNumber].join(" ")}`);
-            } else {
-                alert("אינך יכול לראות את הקלפים של שחקן אחר.");
-            }
+            let playerName = prompt("הכנס שם שחקן:");
+            if (!playerName) return;
+            document.getElementById(`seat${seatNumber}`).classList.add("occupied");
+            document.getElementById(`seat${seatNumber}`).innerHTML = `${playerName}<br>$1000`;
+            occupiedSeats[seatNumber] = true;
+            playerNames[seatNumber] = playerName;
+            playerHands[seatNumber] = [getRandomCard(), getRandomCard()];
+            currentBets[seatNumber] = 0;
+            totalPlayers++;
         }
 
         function startGame() {
+            if (totalPlayers < 2) {
+                alert("נדרשים לפחות שני שחקנים כדי להתחיל את המשחק.");
+                return;
+            }
             communityCards = [getRandomCard(), getRandomCard(), getRandomCard(), getRandomCard(), getRandomCard()];
             document.getElementById("communityCards").innerHTML = "";
             revealFlop();
@@ -149,6 +149,22 @@
 
         function revealRiver() {
             revealCard(4);
+        }
+
+        function playerBet() {
+            let bet = parseInt(prompt("כמה אתה רוצה להמר?"));
+            if (isNaN(bet) || bet <= 0) return;
+            potAmount += bet;
+            document.getElementById("potAmount").textContent = potAmount;
+            alert("הימרת " + bet);
+        }
+
+        function playerCheck() {
+            alert("Check - התור עובר לשחקן הבא");
+        }
+
+        function playerFold() {
+            alert("Fold - השחקן פורש מהמשחק");
         }
 
         function getRandomCard() {
