@@ -33,6 +33,7 @@
             font-weight: bold;
             color: white;
             cursor: pointer;
+            flex-direction: column;
         }
         .occupied {
             background-color: #444;
@@ -58,6 +59,10 @@
             text-align: center;
             border-radius: 5px;
             box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+        }
+        .hidden-card {
+            background-color: gray;
+            color: gray;
         }
         .pot {
             position: absolute;
@@ -85,10 +90,10 @@
         <div class="dealer">דילר</div>
         <div id="communityCards"></div>
         <div class="pot">קופה: <span id="potAmount">0</span></div>
-        <div class="seat" id="seat1" style="top: 10px; left: 400px;" onclick="joinGame(1)">שחקן 1<br>$1000</div>
-        <div class="seat" id="seat2" style="top: 150px; left: 750px;" onclick="joinGame(2)">שחקן 2<br>$1000</div>
-        <div class="seat" id="seat3" style="bottom: 10px; left: 400px;" onclick="joinGame(3)">שחקן 3<br>$1000</div>
-        <div class="seat" id="seat4" style="top: 150px; left: 50px;" onclick="joinGame(4)">שחקן 4<br>$1000</div>
+        <div class="seat" id="seat1" style="top: 10px; left: 400px;" onclick="joinGame(1)">+</div>
+        <div class="seat" id="seat2" style="top: 150px; left: 750px;" onclick="joinGame(2)">+</div>
+        <div class="seat" id="seat3" style="bottom: 10px; left: 400px;" onclick="joinGame(3)">+</div>
+        <div class="seat" id="seat4" style="top: 150px; left: 50px;" onclick="joinGame(4)">+</div>
     </div>
     <div>
         <button onclick="startGame()">התחל משחק</button>
@@ -98,46 +103,54 @@
     </div>
     <script>
         let occupiedSeats = {};
+        let playerNames = {};
         let communityCards = [];
         let playerHands = {};
         let potAmount = 0;
-        let currentTurn = 1;
-        let totalPlayers = 0;
+        let currentPlayer = null;
         
         function joinGame(seatNumber) {
             if (!occupiedSeats[seatNumber]) {
+                let playerName = prompt("הכנס שם שחקן:");
+                if (!playerName) return;
+                
                 document.getElementById(`seat${seatNumber}`).classList.add("occupied");
+                document.getElementById(`seat${seatNumber}`).innerHTML = `${playerName}<br>$1000`;
                 occupiedSeats[seatNumber] = true;
+                playerNames[seatNumber] = playerName;
                 playerHands[seatNumber] = [getRandomCard(), getRandomCard()];
-                totalPlayers++;
-                alert(`שחקן ${seatNumber} הצטרף עם קלפים: ${playerHands[seatNumber].join(" ")}`);
+                showPlayerCards(seatNumber);
             }
         }
         
-        function startGame() {
-            if (totalPlayers < 2) {
-                alert("נדרשים לפחות שני שחקנים כדי להתחיל את המשחק.");
-                return;
+        function showPlayerCards(seatNumber) {
+            if (seatNumber === currentPlayer) {
+                alert(`הקלפים שלך: ${playerHands[seatNumber].join(" ")}`);
+            } else {
+                alert("אינך יכול לראות את הקלפים של שחקן אחר.");
             }
+        }
+
+        function startGame() {
             communityCards = [getRandomCard(), getRandomCard(), getRandomCard(), getRandomCard(), getRandomCard()];
             document.getElementById("communityCards").innerHTML = "";
             revealFlop();
         }
-        
+
         function revealFlop() {
             for (let i = 0; i < 3; i++) {
                 revealCard(i);
             }
         }
-        
+
         function revealTurn() {
             revealCard(3);
         }
-        
+
         function revealRiver() {
             revealCard(4);
         }
-        
+
         function getRandomCard() {
             const suits = ['♠', '♥', '♦', '♣'];
             const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
@@ -145,7 +158,7 @@
             let value = values[Math.floor(Math.random() * values.length)];
             return `${value}${suit}`;
         }
-        
+
         function revealCard(index) {
             let cardDiv = document.createElement("div");
             cardDiv.classList.add("card");
